@@ -1,0 +1,31 @@
+#!/bin/bash
+if [[ $UID != 0 ]]; then
+    echo "Please run this script with sudo:"
+    echo "sudo $0 $*"
+    exit 1
+else
+	if [[ $1 != "-D" ]];then
+	    sudo ifconfig wlan0 down
+	    uuid=`cat /proc/sys/kernel/random/uuid`
+	    template=`cat ./hotspot-config/template` 
+	    echo "Type wifi name:"
+	    read wifiname
+	    echo "Type password:"
+	    read -s password
+	    replace_string_uuid="UUIDREPL"
+	    replace_string_id="__IDREPL__"
+	    replace_string_pass="PASSREPL"
+	    hotspot_file=${template//$replace_string_uuid/$uuid}
+	    hotspot_file=${hotspot_file//$replace_string_id/$wifiname}
+	    hotspot_file=${hotspot_file/$replace_string_pass/$password}
+	    #echo $hotspot_file
+	    echo "wifiname: $wifiname"
+	    echo "$hotspot_file" > /etc/NetworkManager/system-connections/hotspot_file
+	    chmod 600 /etc/NetworkManager/system-connections/hotspot_file
+	    sudo ifconfig wlan0 up
+	else
+	    sudo ifconfig wlan0 down
+		rm /etc/NetworkManager/system-connections/hotspot_file
+	    sudo ifconfig wlan0 up
+	fi
+fi
